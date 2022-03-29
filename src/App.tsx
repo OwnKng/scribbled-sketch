@@ -1,4 +1,3 @@
-import { OrbitControls } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
 import { Suspense } from "react"
 import "./App.css"
@@ -10,7 +9,6 @@ const App = () => {
       <Canvas>
         <Suspense fallback={null}>
           <Panel />
-          <OrbitControls />
         </Suspense>
       </Canvas>
     </div>

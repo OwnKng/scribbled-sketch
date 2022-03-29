@@ -1,12 +1,11 @@
 import { useFrame } from "@react-three/fiber"
-import { useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { ShaderMaterial } from "three"
+import { lerp } from "three/src/math/MathUtils"
 import { hsl2rgb } from "./shaders/hsl2rgb"
 
 const vertexShader = `
-    uniform float uTime; 
-
     varying vec2 vUv; 
     varying float vStrength; 
     varying float vTime; 
@@ -16,13 +15,12 @@ const vertexShader = `
 
         vUv = uv; 
         vStrength = position.z; 
-        vTime = uTime; 
     }
 `
 
 const fragmentShader = `
+    uniform float uTime;
 
-    varying float vTime; 
     varying vec2 vUv; 
     varying float vStrength; 
 
@@ -31,27 +29,35 @@ const fragmentShader = `
     void main() {
         float strength = vStrength * 0.08; 
 
+        float alpha = step(vUv.x, uTime);
+
         vec3 color = hsl2rgb(0.6 + strength * 0.4, strength, strength);   
 
-        gl_FragColor = vec4(color, 1.0);
+        gl_FragColor = vec4(color, alpha);
     }
 `
 
-const Material = () => {
+const Material = ({ reset }: any) => {
   const ref = useRef<ShaderMaterial>(null!)
 
   const uniforms = useMemo(
     () => ({
-      uTime: { value: 0 },
+      uTime: { value: reset },
     }),
-    []
+    [reset]
   )
 
   useFrame(({ clock }) => {
-    const time = clock.getElapsedTime()
-
-    ref.current.uniforms.uTime.value = time
+    ref.current.uniforms.uTime.value = lerp(
+      ref.current.uniforms.uTime.value,
+      1,
+      0.05
+    )
   })
+
+  useEffect(() => {
+    ref.current.uniforms.uTime.value = 0
+  }, [reset])
 
   return (
     <shaderMaterial

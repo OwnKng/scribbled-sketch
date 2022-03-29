@@ -1,15 +1,16 @@
 //@ts-nocheck
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useTexture } from "@react-three/drei"
 import * as THREE from "three"
 import Material from "./Material"
-import { scaleLinear, extent } from "d3"
 
 const Panel = () => {
   const texture = useTexture("head.png")
   const { width, height } = texture.image
   const numberOfPoints = width * height
-  const threshold = 80
+  const threshold = 60
+
+  const [state, setState] = useState(0)
 
   const [originalColors] = useMemo(() => {
     let numVisible = 0
@@ -65,7 +66,7 @@ const Panel = () => {
       tempPosition = randomPoint
       let previousPoint = tempPosition.clone()
 
-      for (let i = 0; i < 4000; i++) {
+      for (let i = 0; i < 2500; i++) {
         tempPosition = new THREE.Vector3(
           ...positions[Math.floor(Math.random() * positions.length)]
         )
@@ -83,24 +84,28 @@ const Panel = () => {
   }, [positions])
 
   return (
-    <group scale={[0.1, 0.1, 0.1]} position={[-4, -4.5, -2]}>
+    <group
+      scale={[0.1, 0.1, 0.1]}
+      position={[-4, -4.5, -2]}
+      onClick={() => setState((prevVal) => (prevVal === 0 ? 1 : 0))}
+    >
       {lines
         .filter((d) => d.length > 5)
         .map((d, i) => (
-          <Tube vertices={d} key={i} />
+          <Tube vertices={d} key={i} reset={state} />
         ))}
     </group>
   )
 }
 
-const Tube = ({ vertices }) => {
+const Tube = ({ vertices, reset }) => {
   const curve = useMemo(() => new THREE.CatmullRomCurve3(vertices), [vertices])
 
   return (
     <>
       <mesh>
-        <tubeGeometry args={[curve, 500, 0.125, 8, false]} />
-        <Material />
+        <tubeGeometry args={[curve, 1000, 0.125, 12, false]} />
+        <Material reset={reset} />
       </mesh>
     </>
   )
