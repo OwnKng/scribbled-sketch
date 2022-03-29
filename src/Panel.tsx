@@ -1,16 +1,17 @@
 //@ts-nocheck
 import { useMemo } from "react"
-import { Line, useTexture } from "@react-three/drei"
+import { useTexture } from "@react-three/drei"
 import * as THREE from "three"
+import Material from "./Material"
 import { scaleLinear, extent } from "d3"
 
 const Panel = () => {
   const texture = useTexture("head.png")
   const { width, height } = texture.image
   const numberOfPoints = width * height
-  const threshold = 50
+  const threshold = 80
 
-  const [originalColors, numberVisible] = useMemo(() => {
+  const [originalColors] = useMemo(() => {
     let numVisible = 0
 
     const canvas = document.createElement("canvas")
@@ -64,7 +65,7 @@ const Panel = () => {
       tempPosition = randomPoint
       let previousPoint = tempPosition.clone()
 
-      for (let i = 0; i < 2500; i++) {
+      for (let i = 0; i < 4000; i++) {
         tempPosition = new THREE.Vector3(
           ...positions[Math.floor(Math.random() * positions.length)]
         )
@@ -82,7 +83,7 @@ const Panel = () => {
   }, [positions])
 
   return (
-    <group scale={[0.1, 0.1, 0.1]}>
+    <group scale={[0.1, 0.1, 0.1]} position={[-4, -4.5, -2]}>
       {lines
         .filter((d) => d.length > 5)
         .map((d, i) => (
@@ -98,8 +99,8 @@ const Tube = ({ vertices }) => {
   return (
     <>
       <mesh>
-        <tubeGeometry args={[curve, 200, 0.25, 8, false]} />
-        <meshBasicMaterial color='cyan' />
+        <tubeGeometry args={[curve, 500, 0.125, 8, false]} />
+        <Material />
       </mesh>
     </>
   )
