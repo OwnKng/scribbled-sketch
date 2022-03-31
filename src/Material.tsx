@@ -55,10 +55,6 @@ const Material = ({ reset }: any) => {
     )
   })
 
-  useEffect(() => {
-    ref.current.uniforms.uTime.value = 0
-  }, [reset])
-
   return (
     <shaderMaterial
       ref={ref}

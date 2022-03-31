@@ -1,16 +1,55 @@
 //@ts-nocheck
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useTexture } from "@react-three/drei"
 import * as THREE from "three"
-import Material from "./Material"
+import { extend, useFrame, useThree } from "@react-three/fiber"
+import { shaderMaterial } from "@react-three/drei"
+import { hsl2rgb } from "./shaders/hsl2rgb"
+
+const vertexShader = `
+    varying vec2 vUv; 
+    varying float vStrength; 
+
+    void main() {
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+        vUv = uv; 
+        vStrength = position.z; 
+    }
+`
+
+const fragmentShader = `
+    uniform float uFade;
+
+    varying vec2 vUv; 
+    varying float vStrength; 
+
+    ${hsl2rgb}
+
+    void main() {
+        float strength = vStrength * 0.08; 
+
+        float alpha = step(vUv.x, uFade);
+
+        vec3 color = hsl2rgb(0.6 + strength * 0.4, strength, strength);   
+
+        gl_FragColor = vec4(color, alpha);
+    }
+`
+
+const CurlMaterial = shaderMaterial({ uFade: 1 }, vertexShader, fragmentShader)
+
+extend({ CurlMaterial })
 
 const Panel = () => {
+  const { viewport } = useThree()
+
   const texture = useTexture("head.png")
   const { width, height } = texture.image
   const numberOfPoints = width * height
   const threshold = 60
 
-  const [state, setState] = useState(0)
+  const [state, setState] = useState(1)
 
   const [originalColors] = useMemo(() => {
     let numVisible = 0
@@ -84,28 +123,41 @@ const Panel = () => {
   }, [positions])
 
   return (
-    <group
-      scale={[0.1, 0.1, 0.1]}
-      position={[-4, -4.5, -2]}
-      onClick={() => setState((prevVal) => (prevVal === 0 ? 1 : 0))}
-    >
-      {lines
-        .filter((d) => d.length > 5)
-        .map((d, i) => (
-          <Tube vertices={d} key={i} reset={state} />
-        ))}
-    </group>
+    <>
+      <mesh onClick={() => setState((prevState) => (prevState === 1 ? 0 : 1))}>
+        <planeBufferGeometry args={[viewport.width, viewport.height, 1, 1]} />
+        <meshBasicMaterial color='black' opacity={0} transparent />
+      </mesh>
+      <group scale={[0.1, 0.1, 0.1]} position={[-4, -4.5, -2]}>
+        {lines
+          .filter((d) => d.length > 5)
+          .map((d, i) => (
+            <Tube vertices={d} key={i} reset={state} />
+          ))}
+      </group>
+    </>
   )
 }
 
 const Tube = ({ vertices, reset }) => {
+  const ref = useRef()
+
   const curve = useMemo(() => new THREE.CatmullRomCurve3(vertices), [vertices])
+
+  useFrame(
+    () =>
+      (ref.current.uFade = THREE.MathUtils.lerp(
+        ref.current.uFade,
+        !!reset,
+        0.025
+      ))
+  )
 
   return (
     <>
       <mesh>
-        <tubeGeometry args={[curve, 1000, 0.125, 12, false]} />
-        <Material reset={reset} />
+        <tubeGeometry args={[curve, 500, 0.125, 12, false]} />
+        <curlMaterial ref={ref} transparent />
       </mesh>
     </>
   )
