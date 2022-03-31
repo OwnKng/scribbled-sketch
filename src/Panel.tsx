@@ -1,43 +1,17 @@
 //@ts-nocheck
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTexture } from "@react-three/drei"
 import * as THREE from "three"
 import { extend, useFrame, useThree } from "@react-three/fiber"
 import { shaderMaterial } from "@react-three/drei"
-import { hsl2rgb } from "./shaders/hsl2rgb"
+import { fragmentShader } from "./shaders/fragment"
+import { vertexShader } from "./shaders/vertex"
 
-const vertexShader = `
-    varying vec2 vUv; 
-    varying float vStrength; 
-
-    void main() {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-
-        vUv = uv; 
-        vStrength = position.z; 
-    }
-`
-
-const fragmentShader = `
-    uniform float uFade;
-
-    varying vec2 vUv; 
-    varying float vStrength; 
-
-    ${hsl2rgb}
-
-    void main() {
-        float strength = vStrength * 0.08; 
-
-        float alpha = step(vUv.x, uFade);
-
-        vec3 color = hsl2rgb(0.6 + strength * 0.4, strength, strength);   
-
-        gl_FragColor = vec4(color, alpha);
-    }
-`
-
-const CurlMaterial = shaderMaterial({ uFade: 1 }, vertexShader, fragmentShader)
+const CurlMaterial = shaderMaterial(
+  { uFade: 1, uBaseColor: 0.6, uColorRange: 0.4 },
+  vertexShader,
+  fragmentShader
+)
 
 extend({ CurlMaterial })
 
@@ -47,9 +21,10 @@ const Panel = () => {
   const texture = useTexture("head.png")
   const { width, height } = texture.image
   const numberOfPoints = width * height
+
   const threshold = 60
 
-  const [state, setState] = useState(1)
+  const [, setState] = useState(1)
 
   const [originalColors] = useMemo(() => {
     let numVisible = 0
@@ -132,26 +107,26 @@ const Panel = () => {
         {lines
           .filter((d) => d.length > 5)
           .map((d, i) => (
-            <Tube vertices={d} key={i} reset={state} />
+            <Tube vertices={d} key={i} />
           ))}
       </group>
     </>
   )
 }
 
-const Tube = ({ vertices, reset }) => {
-  const ref = useRef()
+const Tube = ({ vertices }) => {
+  const ref = useRef(0)
 
   const curve = useMemo(() => new THREE.CatmullRomCurve3(vertices), [vertices])
 
   useFrame(
     () =>
-      (ref.current.uFade = THREE.MathUtils.lerp(
-        ref.current.uFade,
-        !!reset,
-        0.025
-      ))
+      (ref.current.uFade = THREE.MathUtils.lerp(ref.current.uFade, 1, 0.025))
   )
+
+  useEffect(() => {
+    ref.current.uFade = 0
+  })
 
   return (
     <>
