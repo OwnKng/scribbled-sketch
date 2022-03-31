@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTexture } from "@react-three/drei"
 import * as THREE from "three"
-import { extend, useFrame, useThree } from "@react-three/fiber"
+import { extend, useFrame } from "@react-three/fiber"
 import { shaderMaterial } from "@react-three/drei"
 import { fragmentShader } from "./shaders/fragment"
 import { vertexShader } from "./shaders/vertex"
@@ -15,17 +15,20 @@ const CurlMaterial = shaderMaterial(
 
 extend({ CurlMaterial })
 
-const Panel = () => {
-  const { viewport } = useThree()
-
+const Panel = ({
+  numberLines,
+  baseColor,
+  colorRange,
+  maxDistance,
+  sampleSize,
+}: any) => {
   const texture = useTexture("head.png")
   const { width, height } = texture.image
   const numberOfPoints = width * height
 
   const threshold = 60
 
-  const [, setState] = useState(1)
-
+  //* eliminate dark areas of image
   const [originalColors] = useMemo(() => {
     let numVisible = 0
 
@@ -48,6 +51,7 @@ const Panel = () => {
     return [originalColors, numVisible]
   }, [width, height, texture.image, numberOfPoints])
 
+  //* eliminate dark areas of image
   const [positions] = useMemo(() => {
     const positions = []
 
@@ -69,9 +73,8 @@ const Panel = () => {
   const lines = useMemo(() => {
     const lines = []
 
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < numberLines; i++) {
       const lineVertices = []
-      const threshold = 3
       let tempPosition = new THREE.Vector3()
 
       const randomPoint = new THREE.Vector3(
@@ -80,12 +83,12 @@ const Panel = () => {
       tempPosition = randomPoint
       let previousPoint = tempPosition.clone()
 
-      for (let i = 0; i < 2500; i++) {
+      for (let i = 0; i < sampleSize; i++) {
         tempPosition = new THREE.Vector3(
           ...positions[Math.floor(Math.random() * positions.length)]
         )
 
-        if (tempPosition.distanceTo(previousPoint) < threshold) {
+        if (tempPosition.distanceTo(previousPoint) < maxDistance) {
           lineVertices.push(new THREE.Vector3(...tempPosition))
           previousPoint = tempPosition.clone()
         }
@@ -95,26 +98,25 @@ const Panel = () => {
     }
 
     return lines
-  }, [positions])
+  }, [positions, numberLines, maxDistance, sampleSize])
 
   return (
-    <>
-      <mesh onClick={() => setState((prevState) => (prevState === 1 ? 0 : 1))}>
-        <planeBufferGeometry args={[viewport.width, viewport.height, 1, 1]} />
-        <meshBasicMaterial color='black' opacity={0} transparent />
-      </mesh>
-      <group scale={[0.1, 0.1, 0.1]} position={[-4, -4.5, -2]}>
-        {lines
-          .filter((d) => d.length > 5)
-          .map((d, i) => (
-            <Tube vertices={d} key={i} />
-          ))}
-      </group>
-    </>
+    <group scale={[0.1, 0.1, 0.1]} position={[-4, -4.5, -2]}>
+      {lines
+        .filter((d) => d.length > 5)
+        .map((d, i) => (
+          <Tube
+            vertices={d}
+            baseColor={baseColor}
+            colorRange={colorRange}
+            key={i}
+          />
+        ))}
+    </group>
   )
 }
 
-const Tube = ({ vertices }) => {
+const Tube = ({ vertices, baseColor, colorRange }) => {
   const ref = useRef(0)
 
   const curve = useMemo(() => new THREE.CatmullRomCurve3(vertices), [vertices])
@@ -131,8 +133,13 @@ const Tube = ({ vertices }) => {
   return (
     <>
       <mesh>
-        <tubeGeometry args={[curve, 500, 0.125, 12, false]} />
-        <curlMaterial ref={ref} transparent />
+        <tubeGeometry args={[curve, 500, 0.14, 12, false]} />
+        <curlMaterial
+          ref={ref}
+          uBaseColor={baseColor}
+          uColorRange={colorRange}
+          transparent
+        />
       </mesh>
     </>
   )

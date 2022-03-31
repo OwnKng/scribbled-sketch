@@ -2,4 +2,15 @@
   width: 100vw;
   height: 100vh;
   background-color: rgb(8, 18, 28);
+  display: grid;
+  grid-template-areas: "canvas settings";
+  grid-template-columns: 2fr 1fr;
+}
+
+canvas {
+  grid-area: canvas;
+}
+
+.settings {
+  grid-area: settings;
 }
