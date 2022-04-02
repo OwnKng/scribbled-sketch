@@ -6,9 +6,10 @@ import { extend, useFrame } from "@react-three/fiber"
 import { shaderMaterial } from "@react-three/drei"
 import { fragmentShader } from "./shaders/fragment"
 import { vertexShader } from "./shaders/vertex"
+import { Vector3 } from "three"
 
 const CurlMaterial = shaderMaterial(
-  { uFade: 1, uBaseColor: 0.6, uColorRange: 0.4 },
+  { uFade: 1, uBaseColor: 0.6, uColorRange: 0.4, uTime: 0 },
   vertexShader,
   fragmentShader
 )
@@ -22,11 +23,13 @@ const Panel = ({
   maxDistance,
   sampleSize,
 }: any) => {
-  const texture = useTexture("head.png")
+  const ref = useRef()
+
+  const texture = useTexture("hands.png")
   const { width, height } = texture.image
   const numberOfPoints = width * height
 
-  const threshold = 60
+  const threshold = 80
 
   //* eliminate dark areas of image
   const [originalColors] = useMemo(() => {
@@ -100,10 +103,17 @@ const Panel = ({
     return lines
   }, [positions, numberLines, maxDistance, sampleSize])
 
+  const [vec] = useState(() => new THREE.Vector3())
+
+  useFrame(({ camera, mouse }) => {
+    camera.position.lerp(vec.set(mouse.x * 0.5, mouse.y * 0.25, 5), 0.05)
+    camera.lookAt(new Vector3(0, 0, 0))
+  })
+
   return (
-    <group scale={[0.1, 0.1, 0.1]} position={[-4, -4.5, -2]}>
+    <group ref={ref} scale={[0.06, 0.06, 0.06]} position={[-9, -6, -2]}>
       {lines
-        .filter((d) => d.length > 5)
+        .filter((d) => d.length > 3)
         .map((d, i) => (
           <Tube
             vertices={d}
@@ -121,10 +131,10 @@ const Tube = ({ vertices, baseColor, colorRange }) => {
 
   const curve = useMemo(() => new THREE.CatmullRomCurve3(vertices), [vertices])
 
-  useFrame(
-    () =>
-      (ref.current.uFade = THREE.MathUtils.lerp(ref.current.uFade, 1, 0.025))
-  )
+  useFrame(({ clock }) => {
+    ref.current.uFade = THREE.MathUtils.lerp(ref.current.uFade, 1, 0.025)
+    ref.current.uTime = clock.getElapsedTime()
+  })
 
   useEffect(() => {
     ref.current.uFade = 0
@@ -133,7 +143,7 @@ const Tube = ({ vertices, baseColor, colorRange }) => {
   return (
     <>
       <mesh>
-        <tubeGeometry args={[curve, 500, 0.14, 12, false]} />
+        <tubeGeometry args={[curve, 100, 0.25, 12, false]} />
         <curlMaterial
           ref={ref}
           uBaseColor={baseColor}

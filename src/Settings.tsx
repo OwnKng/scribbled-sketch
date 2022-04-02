@@ -1,4 +1,4 @@
-import { useState } from "react"
+import ButtonGroup from "./ButtonGroup"
 
 type settings = {
   numberLines: number
@@ -6,82 +6,98 @@ type settings = {
   colorRange: number
   maxDistance: number
   sampleSize: number
+  updateProperty: (f: any) => void
 }
 
-const Settings = ({ updateSettings }: any) => {
-  const [state, setState] = useState<settings>({
-    numberLines: 200,
-    baseColor: 0.6,
-    colorRange: 0.4,
-    maxDistance: 3,
-    sampleSize: 2000,
-  })
+const createThreshold = (map: any[]) => (input: string) => {
+  const [f1, f2, f3] = map
+  input === "high" ? f1() : input === "med" ? f2() : f3()
+}
 
-  const onChange = (input: any) => {
-    setState({
-      ...state,
-      [input.target.name]: input.target.value,
-    })
-  }
-
-  const onSubmit = (submit: any) => {
-    submit.preventDefault()
-    updateSettings(state)
-  }
-
-  const { numberLines, baseColor, colorRange, maxDistance, sampleSize } = state
-
-  return (
-    <form className='settings'>
-      <input
-        type='range'
-        min={1}
-        max={200}
-        name='numberLines'
-        value={numberLines}
-        onChange={(input) => onChange(input)}
+const Settings = ({
+  numberLines,
+  baseColor,
+  colorRange,
+  maxDistance,
+  sampleSize,
+  updateProperty,
+}: settings) => (
+  <form className='settings'>
+    <p>Controls</p>
+    <div>
+      <p>Number of lines</p>
+      <ButtonGroup
+        labels={["low", "med", "high"]}
+        selected='med'
+        onClick={(f: string) =>
+          createThreshold([
+            () => updateProperty({ numberLines: 300 }),
+            () => updateProperty({ numberLines: 200 }),
+            () => updateProperty({ numberLines: 100 }),
+          ])(f)
+        }
       />
-      <input
-        type='range'
-        min={100}
-        max={5000}
-        step={100}
-        name='sampleSize'
-        value={sampleSize}
-        onChange={(input) => onChange(input)}
+    </div>
+    <div>
+      <p>Sample size</p>
+      <ButtonGroup
+        labels={["low", "med", "high"]}
+        selected='med'
+        onClick={(f: string) =>
+          createThreshold([
+            () => updateProperty({ sampleSize: 4000 }),
+            () => updateProperty({ sampleSize: 2500 }),
+            () => updateProperty({ sampleSize: 1000 }),
+          ])(f)
+        }
       />
+    </div>
+    <div>
+      <p>Max distance lines</p>
+      <ButtonGroup
+        labels={["low", "med", "high"]}
+        selected='med'
+        onClick={(f: string) =>
+          createThreshold([
+            () => updateProperty({ maxDistance: 10 }),
+            () => updateProperty({ maxDistance: 8 }),
+            () => updateProperty({ maxDistance: 4 }),
+          ])(f)
+        }
+      />
+    </div>
+    <div>
+      <label htmlFor='baseColor'>Base color</label>
       <input
+        id='baseColor'
         type='range'
         min={0.0}
         max={1.0}
-        step={0.05}
+        step={0.1}
         name='baseColor'
         value={baseColor}
-        onChange={(input) => onChange(input)}
+        onChange={(input) =>
+          updateProperty({ [input.target.name]: input.target.value })
+        }
       />
+      <span>{baseColor}</span>
+    </div>
+    <div>
+      <label htmlFor='colorRange'>Color range</label>
       <input
         type='range'
         min={0.0}
         max={1.0}
-        step={0.05}
+        step={0.1}
         name='colorRange'
         value={colorRange}
-        onChange={(input) => onChange(input)}
+        onChange={(input) =>
+          updateProperty({ [input.target.name]: input.target.value })
+        }
       />
-      <input
-        type='range'
-        min={1}
-        max={10}
-        step={1}
-        name='maxDistance'
-        value={maxDistance}
-        onChange={(input) => onChange(input)}
-      />
-      <button type='submit' onClick={(submit) => onSubmit(submit)}>
-        update
-      </button>
-    </form>
-  )
-}
+      <span>{colorRange}</span>
+    </div>
+  </form>
+)
 
 export default Settings

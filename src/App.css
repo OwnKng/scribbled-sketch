@@ -1,10 +1,11 @@
 .App {
   width: 100vw;
   height: 100vh;
-  background-color: rgb(8, 18, 28);
+  background-color: #202020;
   display: grid;
   grid-template-areas: "canvas settings";
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 3fr 1fr;
+  color: white;
 }
 
 canvas {
@@ -13,4 +14,9 @@ canvas {
 
 .settings {
   grid-area: settings;
+  border-left: 1px solid white;
+}
+
+.active {
+  background-color: pink;
 }

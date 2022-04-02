@@ -5,7 +5,13 @@ import Panel from "./Panel"
 import Settings from "./Settings"
 
 const App = () => {
-  const [state, setState] = useState()
+  const [state, setState] = useState({
+    numberLines: 200,
+    baseColor: 0.8,
+    colorRange: 0.3,
+    maxDistance: 8,
+    sampleSize: 2500,
+  })
 
   return (
     <div className='App'>
@@ -14,7 +20,10 @@ const App = () => {
           <Panel {...state} />
         </Suspense>
       </Canvas>
-      <Settings updateSettings={setState} />
+      <Settings
+        {...state}
+        updateProperty={(property: any) => setState({ ...state, ...property })}
+      />
     </div>
   )
 }
