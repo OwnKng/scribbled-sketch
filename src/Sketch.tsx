@@ -16,7 +16,7 @@ const CurlMaterial = shaderMaterial(
 
 extend({ CurlMaterial })
 
-const Panel = ({
+const Sketch = ({
   numberLines,
   baseColor,
   colorRange,
@@ -25,15 +25,14 @@ const Panel = ({
 }: any) => {
   const ref = useRef()
 
-  const texture = useTexture("hands.png")
+  const texture = useTexture("/hands.png")
+
   const { width, height } = texture.image
   const numberOfPoints = width * height
 
-  const threshold = 80
-
   //* eliminate dark areas of image
-  const [originalColors] = useMemo(() => {
-    let numVisible = 0
+  const positions = useMemo(() => {
+    const threshold = 80
 
     const canvas = document.createElement("canvas")
     const ctx = canvas.getContext("2d")
@@ -47,15 +46,6 @@ const Panel = ({
     const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const originalColors = Float32Array.from(data)
 
-    for (let i = 0; i < numberOfPoints; i++) {
-      if (originalColors[i * 4 + 0] >= threshold) numVisible++
-    }
-
-    return [originalColors, numVisible]
-  }, [width, height, texture.image, numberOfPoints])
-
-  //* eliminate dark areas of image
-  const [positions] = useMemo(() => {
     const positions = []
 
     for (let i = 0; i < numberOfPoints; i++) {
@@ -70,9 +60,10 @@ const Panel = ({
       }
     }
 
-    return [positions]
-  }, [width, originalColors, numberOfPoints])
+    return positions
+  }, [width, height, texture.image, numberOfPoints])
 
+  //* sample the positions and draw the lines
   const lines = useMemo(() => {
     const lines = []
 
@@ -103,19 +94,12 @@ const Panel = ({
     return lines
   }, [positions, numberLines, maxDistance, sampleSize])
 
-  const [vec] = useState(() => new THREE.Vector3())
-
-  useFrame(({ camera, mouse }) => {
-    camera.position.lerp(vec.set(mouse.x * 0.5, mouse.y * 0.25, 5), 0.05)
-    camera.lookAt(new Vector3(0, 0, 0))
-  })
-
   return (
-    <group ref={ref} scale={[0.06, 0.06, 0.06]} position={[-9, -6, -2]}>
+    <group ref={ref} scale={[0.062, 0.062, 0.062]} position={[-9, -6, -2]}>
       {lines
         .filter((d) => d.length > 3)
         .map((d, i) => (
-          <Tube
+          <Line
             vertices={d}
             baseColor={baseColor}
             colorRange={colorRange}
@@ -126,7 +110,7 @@ const Panel = ({
   )
 }
 
-const Tube = ({ vertices, baseColor, colorRange }) => {
+const Line = ({ vertices, baseColor, colorRange }: any) => {
   const ref = useRef(0)
 
   const curve = useMemo(() => new THREE.CatmullRomCurve3(vertices), [vertices])
@@ -143,7 +127,7 @@ const Tube = ({ vertices, baseColor, colorRange }) => {
   return (
     <>
       <mesh>
-        <tubeGeometry args={[curve, 100, 0.25, 12, false]} />
+        <tubeGeometry args={[curve, 50, 0.25, 12, false]} />
         <curlMaterial
           ref={ref}
           uBaseColor={baseColor}
@@ -155,4 +139,4 @@ const Tube = ({ vertices, baseColor, colorRange }) => {
   )
 }
 
-export default Panel
+export default Sketch

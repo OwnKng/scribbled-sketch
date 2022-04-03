@@ -1,7 +1,7 @@
 .App {
   width: 100vw;
   height: 100vh;
-  background-color: #202020;
+  background-color: #0b1e31;
   display: grid;
   grid-template-areas: "canvas settings";
   grid-template-columns: 3fr 1fr;
@@ -14,9 +14,15 @@ canvas {
 
 .settings {
   grid-area: settings;
-  border-left: 1px solid white;
+}
+
+button {
+  background-color: #0b1e31;
+  border: 1px solid white;
+  padding: 0.5rem 1rem;
+  color: white;
 }
 
 .active {
-  background-color: pink;
+  background-color: #354759;
 }

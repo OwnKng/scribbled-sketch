@@ -1,8 +1,9 @@
+import { OrbitControls } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
 import { Suspense, useState } from "react"
 import "./App.css"
-import Panel from "./Panel"
 import Settings from "./Settings"
+import Sketch from "./Sketch"
 
 const App = () => {
   const [state, setState] = useState({
@@ -17,7 +18,7 @@ const App = () => {
     <div className='App'>
       <Canvas>
         <Suspense fallback={null}>
-          <Panel {...state} />
+          <Sketch {...state} />
         </Suspense>
       </Canvas>
       <Settings
